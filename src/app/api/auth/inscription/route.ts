@@ -34,13 +34,17 @@ export async function POST(request: Request) {
     })
 
     if (role === "COMMERCANT" && boutiqueNom) {
+      const villeRecord = ville
+        ? await prisma.ville.findUnique({ where: { nom: ville } })
+        : null
+
       const boutique = await prisma.boutique.create({
         data: {
           proprietaireId: user.id,
           nom: boutiqueNom,
           slug: slugify(boutiqueNom) + "-" + Date.now().toString(36),
           description: boutiqueDescription || null,
-          ville: ville ? { connect: { nom: ville } } : undefined,
+          villeId: villeRecord?.id || null,
           quartier: quartier || null,
         },
       })

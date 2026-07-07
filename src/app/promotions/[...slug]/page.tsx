@@ -6,7 +6,7 @@ import { notFound } from "next/navigation"
 import {
   Heart, Share2, Clock, MapPin, Phone, MessageSquare,
   ArrowLeft, ChevronLeft, ChevronRight, Star, Store,
-  Facebook, Twitter, Linkedin, Flag
+  Facebook, Twitter, Instagram, Linkedin, Flag
 } from "lucide-react"
 import { formatPrix, calculerReduction, tempsRestant } from "@/lib/utils"
 import { PromotionCard } from "@/components/promotions/PromotionCard"

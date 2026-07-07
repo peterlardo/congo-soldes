@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
-import { v4 as uuid } from "uuid"
+import { randomBytes } from "crypto"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const MAX_SIZE = 5 * 1024 * 1024
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const ext = file.name.split(".").pop() || "jpg"
-    const filename = `${uuid()}.${ext}`
+    const filename = `${randomBytes(16).toString("hex")}.${ext}`
     const uploadDir = join(process.cwd(), "public", "uploads", folder)
 
     await mkdir(uploadDir, { recursive: true })
