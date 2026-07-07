@@ -31,7 +31,15 @@ export default function ConnexionPage() {
         toast.error(result.error)
       } else {
         toast.success("Connexion réussie !")
-        router.push("/")
+        const res = await fetch("/api/auth/session")
+        const session = await res.json()
+        const role = session?.user?.role
+        const dashboardMap: Record<string, string> = {
+          ADMIN: "/admin/dashboard",
+          COMMERCANT: "/commercant/dashboard",
+          CLIENT: "/client/dashboard",
+        }
+        router.push(dashboardMap[role] || "/")
         router.refresh()
       }
     } catch {
