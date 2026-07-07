@@ -2,13 +2,11 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShoppingBag, Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 export default function ConnexionPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [motDePasse, setMotDePasse] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -31,16 +29,7 @@ export default function ConnexionPage() {
         toast.error(result.error)
       } else {
         toast.success("Connexion réussie !")
-        const res = await fetch("/api/auth/session")
-        const session = await res.json()
-        const role = session?.user?.role
-        const dashboardMap: Record<string, string> = {
-          ADMIN: "/admin/dashboard",
-          COMMERCANT: "/commercant/dashboard",
-          CLIENT: "/client/dashboard",
-        }
-        router.push(dashboardMap[role] || "/")
-        router.refresh()
+        window.location.href = "/api/auth/redirect"
       }
     } catch {
       toast.error("Une erreur est survenue")
