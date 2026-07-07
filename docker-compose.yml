@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
+      - NEXTAUTH_URL=http://localhost:3000
+      - DATABASE_URL=file:./dev.db
+    volumes:
+      - sqlite_data:/app/prisma
+      - uploads_data:/app/public/uploads
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
+  uploads_data:

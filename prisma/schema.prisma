@@ -1,0 +1,357 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  motDePasse      String
+  nom             String
+  prenom          String?
+  telephone       String?
+  role            String    @default("CLIENT")
+  avatar          String?
+  emailVerifie    Boolean   @default(false)
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  boutique        Boutique?
+  favoris         Favori[]
+  boutiquesSuivies SuiviBoutique[]
+  historiqueConsultation HistoriqueConsultation[]
+  avis            Avis[]
+  signalements    Signalement[]
+  notifications   Notification[]
+  messagesEnvoyes Message[]     @relation("MessagesEnvoyes")
+  messagesRecus   Message[]     @relation("MessagesRecus")
+  parametres      ParametresUtilisateur?
+}
+
+model ParametresUtilisateur {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  categoriesPreferences String?
+  alerteNouveautes Boolean  @default(true)
+  alerteExpiration Boolean  @default(true)
+  alerteProximite Boolean   @default(false)
+  notifEmail      Boolean   @default(true)
+  notifWhatsApp   Boolean   @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Boutique {
+  id              String   @id @default(cuid())
+  proprietaireId  String   @unique
+  nom             String
+  slug            String   @unique
+  description     String?
+  logo            String?
+  couverture      String?
+  adresse         String?
+  villeId         String?
+  quartier        String?
+  latitude        Float?
+  longitude       Float?
+  telephone       String?
+  whatsapp        String?
+  email           String?
+  siteWeb         String?
+  horaires        String?
+  facebook        String?
+  instagram       String?
+  tiktok          String?
+  linkedin        String?
+  verifie         Boolean  @default(false)
+  actif           Boolean  @default(true)
+  note            Float    @default(0)
+  nombreAvis      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  proprietaire    User     @relation(fields: [proprietaireId], references: [id], onDelete: Cascade)
+  ville           Ville?   @relation(fields: [villeId], references: [id])
+  promotions      Promotion[]
+  avis            Avis[]
+  galeriePhotos   GaleriePhoto[]
+  abonnements     Abonnement[]
+  suiveurs        SuiviBoutique[]
+}
+
+model GaleriePhoto {
+  id         String   @id @default(cuid())
+  boutiqueId String
+  url        String
+  legende    String?
+  ordre      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  boutique Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+}
+
+model Categorie {
+  id          String      @id @default(cuid())
+  nom         String      @unique
+  slug        String      @unique
+  description String?
+  icone       String?
+  image       String?
+  ordre       Int         @default(0)
+  actif       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  promotions  Promotion[]
+  sousCategories SousCategorie[]
+}
+
+model SousCategorie {
+  id           String    @id @default(cuid())
+  nom          String
+  slug         String
+  categorieId  String
+  createdAt    DateTime  @default(now())
+
+  categorie    Categorie @relation(fields: [categorieId], references: [id], onDelete: Cascade)
+  promotions   Promotion[]
+
+  @@unique([slug, categorieId])
+}
+
+model Ville {
+  id        String      @id @default(cuid())
+  nom       String      @unique
+  slug      String      @unique
+  latitude  Float?
+  longitude Float?
+  actif     Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  boutiques Boutique[]
+  quartiers Quartier[]
+}
+
+model Quartier {
+  id        String    @id @default(cuid())
+  nom       String
+  villeId   String
+  actif     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  ville     Ville     @relation(fields: [villeId], references: [id], onDelete: Cascade)
+
+  @@unique([nom, villeId])
+}
+
+model Promotion {
+  id              String          @id @default(cuid())
+  boutiqueId      String
+  categorieId     String
+  sousCategorieId String?
+  nom             String
+  slug            String          @unique
+  descriptionCourte String?
+  descriptionDetaillee String?
+  prixNormal      Float
+  prixPromotionnel Float
+  pourcentageReduction Float?
+  stockDisponible Int?
+  dateDebut       DateTime
+  dateFin         DateTime
+  statut          String          @default("EN_ATTENTE")
+  visibilite      String          @default("NORMAL")
+  nombreVues      Int             @default(0)
+  nombreClicsWhatsApp Int         @default(0)
+  nombreAppels    Int             @default(0)
+  nombreFavoris   Int             @default(0)
+  sponsorise      Boolean         @default(false)
+  sponsoriseExpire DateTime?
+  couponCode      String?
+  couponReduction Float?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  boutique        Boutique        @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  categorie       Categorie       @relation(fields: [categorieId], references: [id])
+  sousCategorie   SousCategorie?  @relation(fields: [sousCategorieId], references: [id])
+  photos          PhotoPromotion[]
+  favoris         Favori[]
+  historiqueConsultations HistoriqueConsultation[]
+  signalements    Signalement[]
+
+  @@index([boutiqueId])
+  @@index([categorieId])
+  @@index([statut])
+}
+
+model PhotoPromotion {
+  id          String   @id @default(cuid())
+  promotionId String
+  url         String
+  ordre       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+}
+
+model Favori {
+  id          String   @id @default(cuid())
+  userId      String
+  promotionId String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promotionId])
+}
+
+model SuiviBoutique {
+  id          String   @id @default(cuid())
+  userId      String
+  boutiqueId  String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boutique    Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, boutiqueId])
+}
+
+model HistoriqueConsultation {
+  id          String   @id @default(cuid())
+  userId      String
+  promotionId String
+  consulteAt  DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+}
+
+model Avis {
+  id         String   @id @default(cuid())
+  userId     String
+  boutiqueId String
+  note       Int
+  commentaire String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boutique   Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, boutiqueId])
+}
+
+model Abonnement {
+  id            String         @id @default(cuid())
+  boutiqueId    String
+  type          String         @default("GRATUIT")
+  dateDebut     DateTime       @default(now())
+  dateFin       DateTime?
+  renouvellementAuto Boolean   @default(false)
+  actif         Boolean        @default(true)
+  maxPromotions Int            @default(5)
+  maxPhotos     Int            @default(3)
+  sponsorise    Boolean        @default(false)
+  statistiquesAvancees Boolean @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  boutique      Boutique       @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  paiements     Paiement[]
+}
+
+model Paiement {
+  id              String        @id @default(cuid())
+  abonnementId    String
+  montant         Float
+  moyen           String
+  statut          String        @default("EN_ATTENTE")
+  reference       String?
+  transactionId   String?
+  emailPaiement   String?
+  telephonePaiement String?
+  validePar       String?
+  valideLe        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  abonnement      Abonnement    @relation(fields: [abonnementId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  expediteurId String
+  destinataireId String
+  sujet      String?
+  contenu    String
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  expediteur User     @relation("MessagesEnvoyes", fields: [expediteurId], references: [id], onDelete: Cascade)
+  destinataire User   @relation("MessagesRecus", fields: [destinataireId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  titre      String
+  message    String
+  type       String?
+  lien       String?
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Signalement {
+  id          String           @id @default(cuid())
+  userId      String
+  promotionId String
+  motif       String
+  description String?
+  statut      String           @default("EN_ATTENTE")
+  traitePar   String?
+  traiteLe    DateTime?
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+}
+
+model Publicite {
+  id          String   @id @default(cuid())
+  titre       String
+  description String?
+  imageUrl    String
+  lien        String?
+  position    String?
+  dateDebut   DateTime
+  dateFin     DateTime
+  actif       Boolean  @default(true)
+  clics       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Newsletter {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model JournalActivite {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  details    String?
+  ip         String?
+  createdAt  DateTime @default(now())
+}
