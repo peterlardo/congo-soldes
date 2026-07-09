@@ -6,7 +6,7 @@ interface EmailOptions {
 
 const FROM = process.env.SMTP_FROM || "noreply@congosoldes.cg"
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Congo Soldes"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://congo-soldes.vercel.app"
 
 function layout(content: string): string {
   return `<!DOCTYPE html>
