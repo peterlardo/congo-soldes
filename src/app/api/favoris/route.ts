@@ -8,22 +8,22 @@ export async function GET() {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
-    const favoris = await prisma.favori.findMany({
+    const favorites = await prisma.favorite.findMany({
       where: { userId: session.user.id },
       include: {
-        promotion: {
-          include: {
-            boutique: { include: { ville: true } },
-            photos: { take: 1 },
-            categorie: true,
-          },
-        },
+promotion: {
+           include: {
+             shop: { select: { id: true, name: true, slug: true, logo: true, address: true, arrondissement: true } },
+             media: { orderBy: { displayOrder: "asc" }, take: 1 },
+           },
+         },
       },
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json(favoris)
+    return NextResponse.json(favorites)
   } catch (error) {
+    console.error("Erreur favoris:", error)
     return NextResponse.json({ error: "Erreur" }, { status: 500 })
   }
 }
@@ -38,30 +38,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ID promotion requis" }, { status: 400 })
     }
 
-    const existing = await prisma.favori.findUnique({
+    const existing = await prisma.favorite.findUnique({
       where: { userId_promotionId: { userId: session.user.id, promotionId } },
     })
 
     if (existing) {
-      await prisma.favori.delete({ where: { id: existing.id } })
+      await prisma.favorite.delete({ where: { id: existing.id } })
       await prisma.promotion.update({
         where: { id: promotionId },
-        data: { nombreFavoris: { decrement: 1 } },
+        data: { favoritesCount: { decrement: 1 } },
       })
       return NextResponse.json({ favori: false })
     }
 
-    const favori = await prisma.favori.create({
+    const favori = await prisma.favorite.create({
       data: { userId: session.user.id, promotionId },
     })
 
     await prisma.promotion.update({
       where: { id: promotionId },
-      data: { nombreFavoris: { increment: 1 } },
+      data: { favoritesCount: { increment: 1 } },
     })
 
     return NextResponse.json({ favori: true, data: favori })
   } catch (error) {
+    console.error("Erreur ajout favori:", error)
     return NextResponse.json({ error: "Erreur" }, { status: 500 })
   }
 }

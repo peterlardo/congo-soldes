@@ -24,31 +24,33 @@ export default function AdminCategoriesPage() {
           </button>
         </div>
 
-        <div className="card overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-100 bg-gray-50">
+              <thead className="border-b border-gray-100 bg-gradient-to-r from-primary-50 to-secondary-50">
                 <tr>
-                  <th className="px-4 py-3 font-medium text-gray-600">Icône</th>
-                  <th className="px-4 py-3 font-medium text-gray-600">Nom</th>
-                  <th className="px-4 py-3 font-medium text-gray-600">Slug</th>
-                  <th className="px-4 py-3 font-medium text-gray-600">Ordre</th>
-                  <th className="px-4 py-3 font-medium text-gray-600">Actions</th>
+                  <th className="px-4 py-3 font-medium text-primary-800">Icône</th>
+                  <th className="px-4 py-3 font-medium text-primary-800">Nom</th>
+                  <th className="px-4 py-3 font-medium text-primary-800">Slug</th>
+                  <th className="px-4 py-3 font-medium text-primary-800">Ordre</th>
+                  <th className="px-4 py-3 font-medium text-primary-800">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {CATEGORIES.map((cat, i) => (
-                  <tr key={cat.slug} className="hover:bg-gray-50">
+                  <tr key={cat.slug} className="hover:bg-primary-50/50 transition-colors">
                     <td className="px-4 py-3 text-xl">{cat.icone}</td>
-                    <td className="px-4 py-3 font-medium text-dark">{cat.nom}</td>
-                    <td className="px-4 py-3 text-gray-500">{cat.slug}</td>
-                    <td className="px-4 py-3 text-gray-600">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{cat.nom}</td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{cat.slug}</td>
+                    <td className="px-4 py-3">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-medium text-primary-700">{i + 1}</span>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100">
+                        <button className="rounded-lg bg-primary-50 p-1.5 text-primary-600 hover:bg-primary-100 transition-colors">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button className="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-100">
+                        <button className="rounded-lg bg-red-50 p-1.5 text-red-600 hover:bg-red-100 transition-colors">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>

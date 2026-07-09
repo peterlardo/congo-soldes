@@ -19,10 +19,10 @@ export default function ClientDashboard() {
   }
 
   const stats = [
-    { label: "Favoris", valeur: "12", icone: <Heart className="h-5 w-5" />, couleur: "text-red-500 bg-red-50" },
-    { label: "Boutiques suivies", valeur: "5", icone: <Store className="h-5 w-5" />, couleur: "text-primary-500 bg-primary-50" },
-    { label: "Consultations", valeur: "48", icone: <Eye className="h-5 w-5" />, couleur: "text-blue-500 bg-blue-50" },
-    { label: "Notifications", valeur: "3", icone: <Bell className="h-5 w-5" />, couleur: "text-yellow-500 bg-yellow-50" },
+    { label: "Favoris", valeur: "12", icone: <Heart className="h-5 w-5" />, couleur: "text-accent-600 bg-accent-100", cardType: "card-accent" },
+    { label: "Boutiques suivies", valeur: "5", icone: <Store className="h-5 w-5" />, couleur: "text-primary-600 bg-primary-100", cardType: "card-primary" },
+    { label: "Consultations", valeur: "48", icone: <Eye className="h-5 w-5" />, couleur: "text-blue-600 bg-blue-100", cardType: "card-blue" },
+    { label: "Notifications", valeur: "3", icone: <Bell className="h-5 w-5" />, couleur: "text-secondary-600 bg-secondary-100", cardType: "card-secondary" },
   ]
 
   return (
@@ -40,14 +40,14 @@ export default function ClientDashboard() {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="card p-5">
+            <div key={stat.label} className={`p-5 transition-all hover:shadow-lg ${stat.cardType}`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.couleur}`}>
                   {stat.icone}
                 </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-dark">{stat.valeur}</p>
-              <p className="text-sm text-gray-600">{stat.label}</p>
+              <p className="text-sm text-gray-500">{stat.label}</p>
             </div>
           ))}
         </div>

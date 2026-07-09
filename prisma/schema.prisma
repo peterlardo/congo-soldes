@@ -8,351 +8,754 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+  MERCHANT
+  SHOP_MANAGER
+  CLIENT
+  VISITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  ACTIVE
+  INACTIVE
+}
+
+enum ShopVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PromotionStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum PromotionVisibility {
+  NORMAL
+  FEATURED
+  SPONSORED
+  PRIORITY
+}
+
+enum SubscriptionPlanType {
+  FREE
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING_PAYMENT
+  TRIAL
+}
+
+enum PaymentMethod {
+  MTN_MONEY
+  AIRTEL_MONEY
+  VISA_MASTERCARD
+  MANUAL
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentType {
+  SUBSCRIPTION
+  SPONSORED_CAMPAIGN
+  MANUAL_VERIFICATION
+}
+
+enum CampaignType {
+  HOME_BANNER
+  FEATURED_SHOP
+  PRIORITY_PROMOTION
+  BANNER_AD
+  USER_NOTIFICATION
+  SOCIAL_MEDIA
+}
+
+enum CampaignPlacement {
+  HOME_HERO
+  HOME_CATEGORIES
+  HOME_FEATURED_SHOPS
+  HOME_TOP_PROMOTIONS
+  SEARCH_RESULTS_TOP
+  SEARCH_RESULTS_SIDEBAR
+  CATEGORY_PAGE_TOP
+  SHOP_PAGE_BANNER
+  PUSH_NOTIFICATION
+  EMAIL_NEWSLETTER
+  WHATSAPP_BROADCAST
+  FACEBOOK_POST
+  INSTAGRAM_POST
+  TIKTOK_POST
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PENDING_APPROVAL
+  ACTIVE
+  PAUSED
+  COMPLETED
+  REJECTED
+  EXPIRED
+}
+
+enum AnalyticsEventType {
+  PROMOTION_VIEW
+  SHOP_VIEW
+  WHATSAPP_CLICK
+  PHONE_CLICK
+  MAP_CLICK
+  SHARE
+  FAVORITE
+  SEARCH
+  CATEGORY_CLICK
+  FILTER_APPLIED
+  SORT_CHANGED
+  PAGINATION
+  CAMPAIGN_IMPRESSION
+  CAMPAIGN_CLICK
+}
+
+enum DeviceType {
+  MOBILE
+  DESKTOP
+  TABLET
+  BOT
+}
+
+enum ReportReason {
+  INAPPROPRIATE_CONTENT
+  FALSE_PROMOTION
+  PRICE_ABUSE
+  EXPIRED_PROMOTION
+  WRONG_CATEGORY
+  SPAM
+  SCAM
+  COPYRIGHT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+  AUTO_HIDDEN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum NotificationType {
+  WELCOME
+  SHOP_PENDING_VALIDATION
+  SHOP_APPROVED
+  SHOP_REJECTED
+  PROMOTION_APPROVED
+  PROMOTION_REJECTED
+  PROMOTION_EXPIRED
+  NEW_PROMOTION_FROM_FOLLOWED_SHOP
+  PAYMENT_RECEIVED
+  SUBSCRIPTION_EXPIRING
+  CAMPAIGN_APPROVED
+  PROMOTION_REPORTED
+  NEW_REVIEW
+  NEW_MESSAGE
+  SYSTEM_ALERT
+}
+
+enum CmsPageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum BannerStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  motDePasse      String
-  nom             String
-  prenom          String?
-  telephone       String?
-  role            String    @default("CLIENT")
-  avatar          String?
-  emailVerifie    Boolean   @default(false)
-  actif           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String    @unique
+  phone             String?   @unique
+  passwordHash      String
+  role              UserRole  @default(CLIENT)
+  avatar            String?
+  status            UserStatus @default(PENDING_VERIFICATION)
+  emailVerifiedAt   DateTime?
+  phoneVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  boutique        Boutique?
-  favoris         Favori[]
-  boutiquesSuivies SuiviBoutique[]
-  historiqueConsultation HistoriqueConsultation[]
-  avis            Avis[]
-  signalements    Signalement[]
-  notifications   Notification[]
-  messagesEnvoyes Message[]     @relation("MessagesEnvoyes")
-  messagesRecus   Message[]     @relation("MessagesRecus")
-  parametres      ParametresUtilisateur?
+  // Relations
+  ownedShop         Shop?
+  managedShops      ShopManager[]
+  favorites         Favorite[]
+  followedShops     ShopFollower[]
+  reviews           Review[]
+  reports           Report[]
+  notifications     Notification[]
+  analyticsEvents   AnalyticsEvent[]
+  auditLogs         AuditLog[]
+  payments          Payment[]
+  cmsPages          CmsPage[]
+  banners           Banner[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([status])
 }
 
-model ParametresUtilisateur {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  categoriesPreferences String?
-  alerteNouveautes Boolean  @default(true)
-  alerteExpiration Boolean  @default(true)
-  alerteProximite Boolean   @default(false)
-  notifEmail      Boolean   @default(true)
-  notifWhatsApp   Boolean   @default(false)
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions RolePermission[]
 }
 
-model Boutique {
+model Permission {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id            String      @id @default(cuid())
+  roleId        String
+  permissionId  String
+  createdAt     DateTime    @default(now())
+
+  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model Shop {
+  id                    String                 @id @default(cuid())
+  ownerId               String                 @unique
+  name                  String
+  slug                  String                 @unique
+  description           String?
+  logo                  String?
+  banner                String?
+  categoryId            String?
+  phone                 String?
+  whatsapp              String?
+  email                 String?
+  website               String?
+  facebookUrl           String?
+  instagramUrl          String?
+  tiktokUrl             String?
+  address               String?
+  arrondissementId      String?
+  district              String?
+  latitude              Float?
+  longitude             Float?
+  openingHours          Json?
+  verificationStatus    ShopVerificationStatus @default(PENDING)
+  isVerified            Boolean                @default(false)
+  isFeatured            Boolean                @default(false)
+  status                ShopStatus             @default(PENDING)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  // Relations
+  category              Category?              @relation(fields: [categoryId], references: [id])
+  owner                 User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  managers              ShopManager[]
+  arrondissement        Arrondissement?        @relation(fields: [arrondissementId], references: [id])
+  promotions            Promotion[]
+  reviews               Review[]
+  followers             ShopFollower[]
+  galleryImages         ShopGalleryImage[]
+  subscription          ShopSubscription?
+  payments              Payment[]
+  campaigns             SponsoredCampaign[]
+  analyticsEvents       AnalyticsEvent[]
+  reports               Report[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([status])
+  @@index([verificationStatus])
+  @@index([arrondissementId])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isVerified])
+}
+
+model ShopManager {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  role      String   @default("MANAGER")
+  createdAt DateTime @default(now())
+
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+}
+
+model ShopGalleryImage {
+  id        String   @id @default(cuid())
+  shopId    String
+  url       String
+  caption   String?
+  displayOrder Int   @default(0)
+  createdAt DateTime @default(now())
+
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  parentId    String?
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  image       String?
+  displayOrder Int     @default(0)
+  status      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent      Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[]    @relation("CategoryHierarchy")
+  promotions  Promotion[]
+  subCategories SubCategory[]
+  shops       Shop[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([status])
+}
+
+model SubCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  categoryId  String
+  createdAt   DateTime @default(now())
+
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  promotions  Promotion[]
+
+  @@unique([slug, categoryId])
+  @@index([categoryId])
+}
+
+model Arrondissement {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  city      String   @default("Brazzaville")
+  slug      String   @unique
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shops     Shop[]
+  districts District[]
+
+  @@index([slug])
+}
+
+model District {
   id              String   @id @default(cuid())
-  proprietaireId  String   @unique
-  nom             String
-  slug            String   @unique
-  description     String?
-  logo            String?
-  couverture      String?
-  adresse         String?
-  villeId         String?
-  quartier        String?
+  name            String
+  arrondissementId String
   latitude        Float?
   longitude       Float?
-  telephone       String?
-  whatsapp        String?
-  email           String?
-  siteWeb         String?
-  horaires        String?
-  facebook        String?
-  instagram       String?
-  tiktok          String?
-  linkedin        String?
-  verifie         Boolean  @default(false)
-  actif           Boolean  @default(true)
-  note            Float    @default(0)
-  nombreAvis      Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  proprietaire    User     @relation(fields: [proprietaireId], references: [id], onDelete: Cascade)
-  ville           Ville?   @relation(fields: [villeId], references: [id])
-  promotions      Promotion[]
-  avis            Avis[]
-  galeriePhotos   GaleriePhoto[]
-  abonnements     Abonnement[]
-  suiveurs        SuiviBoutique[]
-}
+  arrondissement  Arrondissement @relation(fields: [arrondissementId], references: [id], onDelete: Cascade)
 
-model GaleriePhoto {
-  id         String   @id @default(cuid())
-  boutiqueId String
-  url        String
-  legende    String?
-  ordre      Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  boutique Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
-}
-
-model Categorie {
-  id          String      @id @default(cuid())
-  nom         String      @unique
-  slug        String      @unique
-  description String?
-  icone       String?
-  image       String?
-  ordre       Int         @default(0)
-  actif       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-
-  promotions  Promotion[]
-  sousCategories SousCategorie[]
-}
-
-model SousCategorie {
-  id           String    @id @default(cuid())
-  nom          String
-  slug         String
-  categorieId  String
-  createdAt    DateTime  @default(now())
-
-  categorie    Categorie @relation(fields: [categorieId], references: [id], onDelete: Cascade)
-  promotions   Promotion[]
-
-  @@unique([slug, categorieId])
-}
-
-model Ville {
-  id        String      @id @default(cuid())
-  nom       String      @unique
-  slug      String      @unique
-  latitude  Float?
-  longitude Float?
-  actif     Boolean     @default(true)
-  createdAt DateTime    @default(now())
-
-  boutiques Boutique[]
-  quartiers Quartier[]
-}
-
-model Quartier {
-  id        String    @id @default(cuid())
-  nom       String
-  villeId   String
-  actif     Boolean   @default(true)
-  createdAt DateTime  @default(now())
-
-  ville     Ville     @relation(fields: [villeId], references: [id], onDelete: Cascade)
-
-  @@unique([nom, villeId])
+  @@unique([name, arrondissementId])
+  @@index([arrondissementId])
 }
 
 model Promotion {
+  id                  String              @id @default(cuid())
+  shopId              String
+  categoryId          String
+  subCategoryId       String?
+  title               String
+  slug                String              @unique
+  description         String?
+  shortDescription    String?
+  oldPrice            Float
+  newPrice            Float
+  discountPercentage  Float
+  stockQuantity       Int?
+  startDate           DateTime
+  endDate             DateTime
+  conditions          String?
+  status              PromotionStatus     @default(DRAFT)
+  visibility          PromotionVisibility @default(NORMAL)
+  viewsCount          Int                 @default(0)
+  whatsappClicks      Int                 @default(0)
+  phoneClicks         Int                 @default(0)
+  mapClicks           Int                 @default(0)
+  shareCount          Int                 @default(0)
+  favoritesCount      Int                 @default(0)
+  approvedBy          String?
+  approvedAt          DateTime?
+  rejectedReason      String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  shop                Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category            Category            @relation(fields: [categoryId], references: [id])
+  subCategory         SubCategory?        @relation(fields: [subCategoryId], references: [id])
+  media               PromotionMedia[]
+  favorites           Favorite[]
+  analyticsEvents     AnalyticsEvent[]
+  reports             Report[]
+  campaigns           SponsoredCampaign[]
+
+  @@index([shopId])
+  @@index([categoryId])
+  @@index([subCategoryId])
+  @@index([status])
+  @@index([visibility])
+  @@index([startDate, endDate])
+  @@index([slug])
+}
+
+model PromotionMedia {
+  id            String   @id @default(cuid())
+  promotionId   String
+  mediaType     String   // IMAGE, VIDEO
+  fileUrl       String
+  altText       String?
+  displayOrder  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  promotion     Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@index([promotionId])
+}
+
+model Favorite {
+  id            String   @id @default(cuid())
+  userId        String
+  promotionId   String
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion     Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promotionId])
+  @@index([userId])
+  @@index([promotionId])
+}
+
+model ShopFollower {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
+}
+
+model Review {
+  id            String       @id @default(cuid())
+  userId        String
+  shopId        String
+  rating        Int
+  serviceRating Int?
+  qualityRating Int?
+  priceRating   Int?
+  comment       String?
+  status        ReviewStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop          Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([shopId])
+  @@index([status])
+}
+
+model Report {
+  id            String       @id @default(cuid())
+  userId        String
+  promotionId   String?
+  shopId        String?
+  reason        ReportReason
+  description   String?
+  status        ReportStatus @default(PENDING)
+  adminResponse String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion     Promotion?   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  shop          Shop?        @relation(fields: [shopId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([promotionId])
+  @@index([shopId])
+  @@index([status])
+}
+
+model SubscriptionPlan {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  price             Float
+  durationDays      Int
+  promotionLimit    Int
+  featuredLimit     Int
+  analyticsLevel    String              @default("BASIC")
+  supportLevel      String              @default("STANDARD")
+  type              SubscriptionPlanType @default(FREE)
+  status            Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  shopSubscriptions ShopSubscription[]
+
+  @@index([type])
+  @@index([status])
+}
+
+model ShopSubscription {
+  id                String             @id @default(cuid())
+shopId            String             @unique
+  subscriptionPlanId String
+  startDate         DateTime           @default(now())
+  endDate           DateTime?
+  status            SubscriptionStatus @default(PENDING_PAYMENT)
+  autoRenew         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  shop              Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
+
+  @@index([shopId])
+  @@index([subscriptionPlanId])
+  @@index([status])
+}
+
+model Payment {
+  id                  String        @id @default(cuid())
+  userId              String?
+  shopId              String?
+  amount              Float
+  currency            String        @default("XAF")
+  paymentMethod       PaymentMethod
+  transactionReference String?
+  paymentStatus       PaymentStatus @default(PENDING)
+  paymentType         PaymentType
+  metadata            Json?
+  paidAt              DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user                User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shop                Shop?         @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  campaigns           SponsoredCampaign[]
+
+  @@index([userId])
+  @@index([shopId])
+  @@index([paymentStatus])
+  @@index([paymentType])
+  @@index([transactionReference])
+}
+
+model SponsoredCampaign {
   id              String          @id @default(cuid())
-  boutiqueId      String
-  categorieId     String
-  sousCategorieId String?
-  nom             String
-  slug            String          @unique
-  descriptionCourte String?
-  descriptionDetaillee String?
-  prixNormal      Float
-  prixPromotionnel Float
-  pourcentageReduction Float?
-  stockDisponible Int?
-  dateDebut       DateTime
-  dateFin         DateTime
-  statut          String          @default("EN_ATTENTE")
-  visibilite      String          @default("NORMAL")
-  nombreVues      Int             @default(0)
-  nombreClicsWhatsApp Int         @default(0)
-  nombreAppels    Int             @default(0)
-  nombreFavoris   Int             @default(0)
-  sponsorise      Boolean         @default(false)
-  sponsoriseExpire DateTime?
-  couponCode      String?
-  couponReduction Float?
+  shopId          String
+  promotionId     String?
+  campaignType    CampaignType
+  placement       CampaignPlacement
+  budget          Float
+  startDate       DateTime
+  endDate         DateTime
+  status          CampaignStatus  @default(DRAFT)
+  impressions     Int             @default(0)
+  clicks          Int             @default(0)
+  paymentId       String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  boutique        Boutique        @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
-  categorie       Categorie       @relation(fields: [categorieId], references: [id])
-  sousCategorie   SousCategorie?  @relation(fields: [sousCategorieId], references: [id])
-  photos          PhotoPromotion[]
-  favoris         Favori[]
-  historiqueConsultations HistoriqueConsultation[]
-  signalements    Signalement[]
+  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  promotion       Promotion?      @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  payment         Payment?        @relation(fields: [paymentId], references: [id])
+  analyticsEvents AnalyticsEvent[]
 
-  @@index([boutiqueId])
-  @@index([categorieId])
-  @@index([statut])
+  @@index([shopId])
+  @@index([promotionId])
+  @@index([status])
+  @@index([startDate, endDate])
 }
 
-model PhotoPromotion {
-  id          String   @id @default(cuid())
-  promotionId String
-  url         String
-  ordre       Int      @default(0)
-  createdAt   DateTime @default(now())
+model AnalyticsEvent {
+  id            String             @id @default(cuid())
+  userId        String?
+  shopId        String?
+  promotionId   String?
+  campaignId    String?
+  eventType     AnalyticsEventType
+  ipAddress     String?
+  userAgent     String?
+  deviceType    DeviceType?
+  referrer      String?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
 
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-}
+  user          User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shop          Shop?              @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  promotion     Promotion?         @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  campaign      SponsoredCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
-model Favori {
-  id          String   @id @default(cuid())
-  userId      String
-  promotionId String
-  createdAt   DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, promotionId])
-}
-
-model SuiviBoutique {
-  id          String   @id @default(cuid())
-  userId      String
-  boutiqueId  String
-  createdAt   DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  boutique    Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, boutiqueId])
-}
-
-model HistoriqueConsultation {
-  id          String   @id @default(cuid())
-  userId      String
-  promotionId String
-  consulteAt  DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-}
-
-model Avis {
-  id         String   @id @default(cuid())
-  userId     String
-  boutiqueId String
-  note       Int
-  commentaire String?
-  createdAt  DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  boutique   Boutique @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, boutiqueId])
-}
-
-model Abonnement {
-  id            String         @id @default(cuid())
-  boutiqueId    String
-  type          String         @default("GRATUIT")
-  dateDebut     DateTime       @default(now())
-  dateFin       DateTime?
-  renouvellementAuto Boolean   @default(false)
-  actif         Boolean        @default(true)
-  maxPromotions Int            @default(5)
-  maxPhotos     Int            @default(3)
-  sponsorise    Boolean        @default(false)
-  statistiquesAvancees Boolean @default(false)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  boutique      Boutique       @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
-  paiements     Paiement[]
-}
-
-model Paiement {
-  id              String        @id @default(cuid())
-  abonnementId    String
-  montant         Float
-  moyen           String
-  statut          String        @default("EN_ATTENTE")
-  reference       String?
-  transactionId   String?
-  emailPaiement   String?
-  telephonePaiement String?
-  validePar       String?
-  valideLe        DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  abonnement      Abonnement    @relation(fields: [abonnementId], references: [id], onDelete: Cascade)
-}
-
-model Message {
-  id         String   @id @default(cuid())
-  expediteurId String
-  destinataireId String
-  sujet      String?
-  contenu    String
-  lu         Boolean  @default(false)
-  createdAt  DateTime @default(now())
-
-  expediteur User     @relation("MessagesEnvoyes", fields: [expediteurId], references: [id], onDelete: Cascade)
-  destinataire User   @relation("MessagesRecus", fields: [destinataireId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([shopId])
+  @@index([promotionId])
+  @@index([campaignId])
+  @@index([eventType])
+  @@index([createdAt])
 }
 
 model Notification {
-  id         String   @id @default(cuid())
-  userId     String
-  titre      String
-  message    String
-  type       String?
-  lien       String?
-  lu         Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([type])
+  @@index([createdAt])
 }
 
-model Signalement {
-  id          String           @id @default(cuid())
-  userId      String
-  promotionId String
-  motif       String
-  description String?
-  statut      String           @default("EN_ATTENTE")
-  traitePar   String?
-  traiteLe    DateTime?
-  createdAt   DateTime         @default(now())
+model CmsPage {
+  id                String         @id @default(cuid())
+  title             String
+  slug              String         @unique
+  content           String
+  metaTitle         String?
+  metaDescription   String?
+  status            CmsPageStatus  @default(DRAFT)
+  authorId          String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  author            User?          @relation(fields: [authorId], references: [id])
+
+  @@index([slug])
+  @@index([status])
 }
 
-model Publicite {
-  id          String   @id @default(cuid())
-  titre       String
-  description String?
+model Banner {
+  id          String        @id @default(cuid())
+  title       String
   imageUrl    String
-  lien        String?
-  position    String?
-  dateDebut   DateTime
-  dateFin     DateTime
-  actif       Boolean  @default(true)
-  clics       Int      @default(0)
+  linkUrl     String?
+  placement   String
+  startDate   DateTime
+  endDate     DateTime?
+  status      BannerStatus  @default(DRAFT)
+  authorId    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  author      User?         @relation(fields: [authorId], references: [id])
+
+  @@index([placement])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
 
-model Newsletter {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  actif     Boolean  @default(true)
-  createdAt DateTime @default(now())
-}
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-model JournalActivite {
-  id         String   @id @default(cuid())
-  userId     String?
-  action     String
-  details    String?
-  ip         String?
-  createdAt  DateTime @default(now())
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
 }

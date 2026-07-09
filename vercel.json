@@ -1,0 +1,16 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "regions": ["fra1"],
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "@next_public_app_url"
+  },
+  "crons": [
+    {
+      "path": "/api/crons/notifications",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

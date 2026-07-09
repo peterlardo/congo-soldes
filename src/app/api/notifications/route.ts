@@ -16,7 +16,7 @@ export async function GET() {
       take: 50,
     })
 
-    const nonLu = notifications.filter((n) => !n.lu).length
+    const nonLu = notifications.filter((n) => !n.readAt).length
 
     return NextResponse.json({ notifications, nonLu })
   } catch (error) {
@@ -36,13 +36,13 @@ export async function PUT(request: Request) {
 
     if (toutLire) {
       await prisma.notification.updateMany({
-        where: { userId: session.user.id, lu: false },
-        data: { lu: true },
+        where: { userId: session.user.id, readAt: null },
+        data: { readAt: new Date() },
       })
     } else if (notificationId) {
       await prisma.notification.update({
         where: { id: notificationId },
-        data: { lu: true },
+        data: { readAt: new Date() },
       })
     }
 

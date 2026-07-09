@@ -9,10 +9,10 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        motDePasse: { label: "Mot de passe", type: "password" },
+        password: { label: "Mot de passe", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.motDePasse) {
+        if (!credentials?.email || !credentials?.password) {
           throw new Error("Email et mot de passe requis")
         }
 
@@ -24,22 +24,40 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email ou mot de passe incorrect")
         }
 
-        if (!user.actif) {
+        if (user.status === "SUSPENDED") {
+          throw new Error("Compte suspendu. Contactez l'administrateur.")
+        }
+
+        if (user.status === "INACTIVE") {
           throw new Error("Compte désactivé. Contactez l'administrateur.")
         }
 
-        const isValid = await compare(credentials.motDePasse, user.motDePasse)
+        const isValid = await compare(credentials.password, user.passwordHash)
 
         if (!isValid) {
           throw new Error("Email ou mot de passe incorrect")
         }
 
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        })
+
+        await prisma.auditLog.create({
+          data: {
+            userId: user.id,
+            action: "LOGIN",
+            entityType: "User",
+            entityId: user.id,
+          },
+        })
+
         return {
           id: user.id,
           email: user.email,
-          name: `${user.prenom ?? ""} ${user.nom}`.trim(),
+          name: `${user.firstName} ${user.lastName}`.trim(),
           role: user.role,
-          avatar: user.avatar,
+          avatar: user.avatar ?? undefined,
         }
       },
     }),

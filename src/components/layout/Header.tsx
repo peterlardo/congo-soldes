@@ -83,7 +83,7 @@ export function Header() {
                             </Link>
                           </>
                         )}
-                        {role === "COMMERCANT" && (
+                        {(role === "MERCHANT" || role === "COMMERCANT") && (
                           <>
                             <Link href="/commercant/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setProfilOuvert(false)}>
                               <Store className="h-4 w-4" /> Espace commerçant
@@ -93,7 +93,7 @@ export function Header() {
                             </Link>
                           </>
                         )}
-                        {role === "ADMIN" && (
+                        {(role === "ADMIN" || role === "SUPER_ADMIN" || role === "MODERATOR") && (
                           <Link href="/admin/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setProfilOuvert(false)}>
                             <Settings className="h-4 w-4" /> Administration
                           </Link>

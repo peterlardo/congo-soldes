@@ -2,7 +2,8 @@ import { prisma } from "./prisma"
 import { genererReference } from "./utils"
 
 interface PaiementInit {
-  abonnementId: string
+  shopId: string
+  subscriptionPlanId: string
   montant: number
   moyen: "MTN_MONEY" | "AIRTEL_MONEY" | "VISA" | "MASTERCARD" | "MANUEL"
   telephone?: string
@@ -12,20 +13,19 @@ interface PaiementInit {
 export async function initierPaiement(data: PaiementInit) {
   const reference = genererReference()
 
-  const paiement = await prisma.paiement.create({
+  const paiement = await prisma.payment.create({
     data: {
-      abonnementId: data.abonnementId,
-      montant: data.montant,
-      moyen: data.moyen,
-      statut: "EN_ATTENTE",
-      reference,
-      telephonePaiement: data.telephone || null,
-      emailPaiement: data.email || null,
+      shopId: data.shopId,
+      amount: data.montant,
+      paymentMethod: data.moyen as any,
+      paymentStatus: "PENDING",
+      paymentType: "SUBSCRIPTION",
+      transactionReference: reference,
+      metadata: { telephone: data.telephone, email: data.email, subscriptionPlanId: data.subscriptionPlanId },
     },
   })
 
   if (data.moyen === "MANUEL") {
-    // Paiement manuel - en attente de validation admin
     return {
       success: true,
       reference,
@@ -35,7 +35,6 @@ export async function initierPaiement(data: PaiementInit) {
   }
 
   if (data.moyen === "MTN_MONEY" || data.moyen === "AIRTEL_MONEY") {
-    // Simulation mobile money
     const mobileMoneyResult = await simulerPaiementMobile(
       data.moyen,
       data.telephone || "",
@@ -44,22 +43,21 @@ export async function initierPaiement(data: PaiementInit) {
     )
 
     if (mobileMoneyResult.success) {
-      await prisma.paiement.update({
+      await prisma.payment.update({
         where: { id: paiement.id },
         data: {
-          transactionId: mobileMoneyResult.transactionId,
-          statut: "VALIDE",
-          valideLe: new Date(),
+          transactionReference: mobileMoneyResult.transactionId,
+          paymentStatus: "COMPLETED",
+          paidAt: new Date(),
         },
       })
 
-      await activerAbonnement(data.abonnementId)
+      await activerAbonnement(data.shopId, data.subscriptionPlanId)
     }
 
     return mobileMoneyResult
   }
 
-  // Carte bancaire - simulation
   return {
     success: true,
     reference,
@@ -73,8 +71,6 @@ async function simulerPaiementMobile(
   montant: number,
   reference: string
 ) {
-  // Simulation d'appel API MTN/Airtel
-  // Dans un environnement de production, remplacer par l'API réelle
   const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
   return {
@@ -85,24 +81,29 @@ async function simulerPaiementMobile(
   }
 }
 
-async function activerAbonnement(abonnementId: string) {
-  const abonnement = await prisma.abonnement.findUnique({
-    where: { id: abonnementId },
+async function activerAbonnement(shopId: string, subscriptionPlanId: string) {
+  const subscription = await prisma.subscriptionPlan.findUnique({
+    where: { id: subscriptionPlanId },
   })
 
-  if (!abonnement) return
+  if (!subscription) return
 
-  const dureeMois = abonnement.type === "ENTREPRISE" ? 12 : 1
   const dateFin = new Date()
-  dateFin.setMonth(dateFin.getMonth() + dureeMois)
+  dateFin.setDate(dateFin.getDate() + subscription.durationDays)
 
-  await prisma.abonnement.update({
-    where: { id: abonnementId },
-    data: {
-      actif: true,
-      dateDebut: new Date(),
-      dateFin,
-      renouvellementAuto: true,
+  await prisma.shopSubscription.upsert({
+    where: { shopId },
+    create: {
+      shopId,
+      subscriptionPlanId,
+      startDate: new Date(),
+      endDate: dateFin,
+      status: "ACTIVE",
+    },
+    update: {
+      startDate: new Date(),
+      endDate: dateFin,
+      status: "ACTIVE",
     },
   })
 }
@@ -111,16 +112,19 @@ export async function validerPaiementManuel(
   paiementId: string,
   adminId: string
 ) {
-  const paiement = await prisma.paiement.update({
+  const paiement = await prisma.payment.update({
     where: { id: paiementId },
     data: {
-      statut: "VALIDE",
-      validePar: adminId,
-      valideLe: new Date(),
+      paymentStatus: "COMPLETED",
+      userId: adminId,
+      paidAt: new Date(),
     },
   })
 
-  await activerAbonnement(paiement.abonnementId)
+  const metadata = paiement.metadata as { shopId?: string; subscriptionPlanId?: string } | null
+  if (metadata?.shopId && metadata?.subscriptionPlanId) {
+    await activerAbonnement(metadata.shopId, metadata.subscriptionPlanId)
+  }
 
   return paiement
 }

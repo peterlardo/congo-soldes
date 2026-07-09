@@ -8,11 +8,11 @@ export async function GET() {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
-    const suivis = await prisma.suiviBoutique.findMany({
+    const suivis = await prisma.shopFollower.findMany({
       where: { userId: session.user.id },
       include: {
-        boutique: {
-          include: { ville: true, _count: { select: { promotions: true } } },
+        shop: {
+          include: { arrondissement: true, _count: { select: { promotions: true } } },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -34,17 +34,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ID boutique requis" }, { status: 400 })
     }
 
-    const existing = await prisma.suiviBoutique.findUnique({
-      where: { userId_boutiqueId: { userId: session.user.id, boutiqueId } },
+    const existing = await prisma.shopFollower.findUnique({
+      where: { userId_shopId: { userId: session.user.id, shopId: boutiqueId } },
     })
 
     if (existing) {
-      await prisma.suiviBoutique.delete({ where: { id: existing.id } })
+      await prisma.shopFollower.delete({ where: { id: existing.id } })
       return NextResponse.json({ suivre: false })
     }
 
-    await prisma.suiviBoutique.create({
-      data: { userId: session.user.id, boutiqueId },
+    await prisma.shopFollower.create({
+      data: { userId: session.user.id, shopId: boutiqueId },
     })
 
     return NextResponse.json({ suivre: true })

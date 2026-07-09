@@ -16,7 +16,7 @@ export function formatPrix(prix: number): string {
 }
 
 export function calculerReduction(prixNormal: number, prixPromo: number): number {
-  if (prixNormal <= 0) return 0
+  if (prixNormal <= 0 || prixPromo >= prixNormal) return 0
   return Math.round(((prixNormal - prixPromo) / prixNormal) * 100)
 }
 
@@ -84,6 +84,94 @@ export function calculerDistance(
   return R * c
 }
 
+export function getNotificationLabel(type: string): string {
+  const labels: Record<string, string> = {
+    WELCOME: "Bienvenue",
+    SHOP_PENDING_VALIDATION: "Boutique en attente",
+    SHOP_APPROVED: "Boutique approuvée",
+    SHOP_REJECTED: "Boutique refusée",
+    PROMOTION_APPROVED: "Promotion approuvée",
+    PROMOTION_REJECTED: "Promotion refusée",
+    PROMOTION_EXPIRED: "Promotion expirée",
+    NEW_PROMOTION_FROM_FOLLOWED_SHOP: "Nouvelle promotion",
+    PAYMENT_RECEIVED: "Paiement reçu",
+    SUBSCRIPTION_EXPIRING: "Abonnement expirant",
+    CAMPAIGN_APPROVED: "Campagne approuvée",
+    PROMOTION_REPORTED: "Promotion signalée",
+    NEW_REVIEW: "Nouvel avis",
+    NEW_MESSAGE: "Nouveau message",
+    SYSTEM_ALERT: "Alerte système",
+  }
+  return labels[type] ?? type
+}
+
+export function formatTaux(taux: number): string {
+  return `${(taux * 100).toFixed(0)}%`
+}
+
+export function tronquerTexte(texte: string, max: number): string {
+  if (texte.length <= max) return texte
+  return texte.substring(0, max) + "..."
+}
+
+export function validerEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+export function validerTelephone(telephone: string): boolean {
+  return /^(\+242)?0[56]\d{7,8}$/.test(telephone.replace(/\s/g, ""))
+}
+
+export function genererMotDePasse(longueur: number = 16): string {
+  const minuscules = "abcdefghijklmnopqrstuvwxyz"
+  const majuscules = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  const chiffres = "0123456789"
+  const tous = minuscules + majuscules + chiffres
+  let mdp = ""
+  mdp += minuscules[Math.floor(Math.random() * minuscules.length)]
+  mdp += majuscules[Math.floor(Math.random() * majuscules.length)]
+  mdp += chiffres[Math.floor(Math.random() * chiffres.length)]
+  for (let i = mdp.length; i < longueur; i++) {
+    mdp += tous[Math.floor(Math.random() * tous.length)]
+  }
+  return mdp.split("").sort(() => Math.random() - 0.5).join("")
+}
+
+export function getRoleLabel(role: string): string {
+  const labels: Record<string, string> = {
+    SUPER_ADMIN: "Super Admin",
+    ADMIN: "Administrateur",
+    MODERATOR: "Modérateur",
+    MERCHANT: "Commerçant",
+    SHOP_MANAGER: "Gérant",
+    CLIENT: "Client",
+    VISITOR: "Visiteur",
+  }
+  return labels[role] ?? role
+}
+
+export function getStatusCouleur(status: string): string {
+  const couleurs: Record<string, string> = {
+    ACTIVE: "green",
+    APPROVED: "green",
+    COMPLETED: "green",
+    PENDING: "yellow",
+    PENDING_VERIFICATION: "yellow",
+    INACTIVE: "gray",
+    EXPIRED: "red",
+    REJECTED: "red",
+    SUSPENDED: "red",
+    CANCELLED: "red",
+    ARCHIVED: "gray",
+    PENDING_PAYMENT: "yellow",
+  }
+  return couleurs[status] ?? "gray"
+}
+
+export function getTempsRestant(date: Date | string): string {
+  return tempsRestant(date)
+}
+
 export const CATEGORIES = [
   { nom: "Mode et vêtements", slug: "mode-et-vetements", icone: "👕" },
   { nom: "Chaussures", slug: "chaussures", icone: "👟" },
@@ -147,9 +235,21 @@ export function getAbonnementLabel(type: string): string {
 export function getStatutLabel(statut: string): string {
   const labels: Record<string, string> = {
     ACTIF: "Actif",
-    EXPIRE: "Expiré",
+    ACTIVE: "Actif",
+    APPROVED: "Approuvé",
+    PENDING: "En attente",
     EN_ATTENTE: "En attente",
-    REJETE: "Rejeté",
+    PENDING_VERIFICATION: "En attente",
+    PENDING_PAYMENT: "En attente",
+    COMPLETED: "Valide",
+    VALIDE: "Valide",
+    EXPIRED: "Expiré",
+    REJECTED: "Refusé",
+    REFUSE: "Refusé",
+    SUSPENDED: "Suspendu",
+    CANCELLED: "Annulé",
+    ARCHIVED: "Archivé",
+    INACTIVE: "Inactif",
   }
   return labels[statut] ?? statut
 }

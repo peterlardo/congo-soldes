@@ -17,7 +17,7 @@ const PROMOS_EXEMPLE = Array.from({ length: 12 }, (_, i) => ({
 export default function PromotionsPage() {
   return (
     <>
-      <section className="bg-gradient-to-br from-primary-500 to-primary-700 py-12">
+      <section className="bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-700 py-12">
         <div className="container-congo">
           <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">
             Toutes les promotions

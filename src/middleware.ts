@@ -5,16 +5,17 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
+    const role = token?.role as string | undefined
 
-    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
+    if (path.startsWith("/admin") && role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/auth/connexion", req.url))
     }
 
-    if (path.startsWith("/commercant") && token?.role !== "COMMERCANT" && token?.role !== "ADMIN") {
+    if (path.startsWith("/commercant") && role !== "MERCHANT" && role !== "SHOP_MANAGER" && role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/auth/connexion", req.url))
     }
 
-    if (path.startsWith("/client") && !token) {
+    if (path.startsWith("/client") && !role) {
       return NextResponse.redirect(new URL("/auth/connexion", req.url))
     }
 

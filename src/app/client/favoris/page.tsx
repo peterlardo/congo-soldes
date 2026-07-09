@@ -19,12 +19,14 @@ export default function FavorisPage() {
       <div className="flex-1 p-6 lg:p-8">
         <div className="mb-8">
           <div className="flex items-center gap-3">
-            <Heart className="h-6 w-6 text-red-500" />
-            <h1 className="font-display text-2xl font-bold text-dark">Mes favoris</h1>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-100 text-accent-600">
+              <Heart className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-dark">Mes favoris</h1>
+              <p className="text-sm text-gray-600">Retrouvez toutes vos promotions favorites</p>
+            </div>
           </div>
-          <p className="mt-1 text-gray-600">
-            Retrouvez toutes vos promotions favorites
-          </p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

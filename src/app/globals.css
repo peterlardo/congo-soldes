@@ -65,6 +65,24 @@
   .badge-primary {
     @apply badge bg-primary-100 text-primary-800;
   }
+  .card-primary {
+    @apply border-l-4 border-l-primary-500 card;
+  }
+  .card-secondary {
+    @apply border-l-4 border-l-secondary-500 card;
+  }
+  .card-accent {
+    @apply border-l-4 border-l-accent-500 card;
+  }
+  .card-blue {
+    @apply border-l-4 border-l-blue-500 card;
+  }
+  .card-purple {
+    @apply border-l-4 border-l-purple-500 card;
+  }
+  .card-amber {
+    @apply border-l-4 border-l-amber-500 card;
+  }
   .section-title {
     @apply font-display text-2xl font-bold text-dark sm:text-3xl;
   }

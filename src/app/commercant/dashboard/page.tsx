@@ -17,19 +17,19 @@ export default function CommercantDashboard() {
     redirect("/auth/connexion")
   }
 
-  if (session.user.role !== "COMMERCANT") {
+  if (session.user.role !== "MERCHANT" && session.user.role !== "COMMERCANT") {
     redirect("/")
   }
 
   const stats = [
-    { label: "Promotions actives", valeur: "8", icone: <CheckCircle className="h-5 w-5" />, couleur: "text-green-500 bg-green-50" },
-    { label: "En attente", valeur: "2", icone: <Clock className="h-5 w-5" />, couleur: "text-yellow-500 bg-yellow-50" },
-    { label: "Expirées", valeur: "3", icone: <XCircle className="h-5 w-5" />, couleur: "text-red-500 bg-red-50" },
-    { label: "Vues totales", valeur: "1,247", icone: <Eye className="h-5 w-5" />, couleur: "text-blue-500 bg-blue-50" },
-    { label: "Clics WhatsApp", valeur: "89", icone: <MessageSquare className="h-5 w-5" />, couleur: "text-green-500 bg-green-50" },
-    { label: "Appels", valeur: "34", icone: <Phone className="h-5 w-5" />, couleur: "text-primary-500 bg-primary-50" },
-    { label: "Favoris", valeur: "156", icone: <Heart className="h-5 w-5" />, couleur: "text-red-500 bg-red-50" },
-    { label: "Messages", valeur: "12", icone: <MessageSquare className="h-5 w-5" />, couleur: "text-purple-500 bg-purple-50" },
+    { label: "Promotions actives", valeur: "8", icone: <CheckCircle className="h-5 w-5" />, couleur: "text-secondary-600 bg-secondary-100", cardType: "card-secondary" },
+    { label: "En attente", valeur: "2", icone: <Clock className="h-5 w-5" />, couleur: "text-amber-600 bg-amber-100", cardType: "card-amber" },
+    { label: "Expirées", valeur: "3", icone: <XCircle className="h-5 w-5" />, couleur: "text-accent-600 bg-accent-100", cardType: "card-accent" },
+    { label: "Vues totales", valeur: "1,247", icone: <Eye className="h-5 w-5" />, couleur: "text-blue-600 bg-blue-100", cardType: "card-blue" },
+    { label: "Clics WhatsApp", valeur: "89", icone: <MessageSquare className="h-5 w-5" />, couleur: "text-secondary-600 bg-secondary-100", cardType: "card-secondary" },
+    { label: "Appels", valeur: "34", icone: <Phone className="h-5 w-5" />, couleur: "text-primary-600 bg-primary-100", cardType: "card-primary" },
+    { label: "Favoris", valeur: "156", icone: <Heart className="h-5 w-5" />, couleur: "text-accent-600 bg-accent-100", cardType: "card-accent" },
+    { label: "Messages", valeur: "12", icone: <MessageSquare className="h-5 w-5" />, couleur: "text-purple-600 bg-purple-100", cardType: "card-purple" },
   ]
 
   const abonnement = {
@@ -77,14 +77,14 @@ export default function CommercantDashboard() {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="card p-5">
+            <div key={stat.label} className={`p-5 transition-all hover:shadow-lg ${stat.cardType}`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.couleur}`}>
                   {stat.icone}
                 </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-dark">{stat.valeur}</p>
-              <p className="text-sm text-gray-600">{stat.label}</p>
+              <p className="text-sm text-gray-500">{stat.label}</p>
             </div>
           ))}
         </div>

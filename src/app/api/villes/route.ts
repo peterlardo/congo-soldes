@@ -6,13 +6,12 @@ import { authOptions } from "@/lib/auth"
 
 export async function GET() {
   try {
-    const villes = await prisma.ville.findMany({
-      where: { actif: true },
+    const villes = await prisma.arrondissement.findMany({
       include: {
-        _count: { select: { boutiques: true } },
-        quartiers: { where: { actif: true } },
+        _count: { select: { shops: true } },
+        districts: true,
       },
-      orderBy: { nom: "asc" },
+      orderBy: { name: "asc" },
     })
     return NextResponse.json(villes)
   } catch (error) {
@@ -28,10 +27,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const ville = await prisma.ville.create({
+    const ville = await prisma.arrondissement.create({
       data: {
-        nom: body.nom,
-        slug: slugify(body.nom),
+        name: body.name,
+        slug: slugify(body.name),
         latitude: body.latitude ? parseFloat(body.latitude) : null,
         longitude: body.longitude ? parseFloat(body.longitude) : null,
       },

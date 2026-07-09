@@ -56,7 +56,7 @@ export default function Accueil() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-700 to-secondary-700">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="container-congo relative py-20 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
@@ -170,7 +170,7 @@ export default function Accueil() {
       </section>
 
       {/* Top réductions */}
-      <section className="bg-gradient-to-r from-primary-500 to-primary-700 py-16">
+      <section className="bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-600 py-16">
         <div className="container-congo">
           <div className="mb-8 text-center text-white">
             <Percent className="mx-auto mb-4 h-10 w-10 text-yellow-300" />
@@ -271,7 +271,7 @@ export default function Accueil() {
 
       {/* CTA - Devenir commerçant */}
       <section className="container-congo py-16">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-primary-800 p-8 sm:p-12">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-secondary-700 p-8 sm:p-12">
           <div className="relative z-10 flex flex-col items-center gap-6 text-center lg:flex-row lg:text-left">
             <div className="flex-1">
               <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">

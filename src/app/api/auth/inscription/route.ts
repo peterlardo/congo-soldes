@@ -2,13 +2,18 @@ import { NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { slugify } from "@/lib/utils"
+import { sendWelcomeEmail } from "@/lib/email"
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { nom, prenom, email, telephone, motDePasse, role, boutiqueNom, boutiqueDescription, ville, quartier } = body
+    const {
+      firstName, lastName, email, phone, password, role,
+      shopName, shopDescription, shopAddress, arrondissementId,
+      district, shopPhone, shopWhatsapp, shopCategoryId,
+    } = body
 
-    if (!email || !motDePasse || !nom) {
+    if (!email || !password || !firstName) {
       return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 })
     }
 
@@ -17,52 +22,67 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 400 })
     }
 
-    const hashedPassword = await hash(motDePasse, 12)
+    const passwordHash = await hash(password, 12)
 
     const user = await prisma.user.create({
       data: {
+        firstName,
+        lastName: lastName || "",
         email,
-        motDePasse: hashedPassword,
-        nom,
-        prenom,
-        telephone: telephone || null,
+        phone: phone || null,
+        passwordHash,
         role: role || "CLIENT",
-        parametres: {
-          create: {},
-        },
+        status: "PENDING_VERIFICATION",
       },
     })
 
-    if (role === "COMMERCANT" && boutiqueNom) {
-      const villeRecord = ville
-        ? await prisma.ville.findUnique({ where: { nom: ville } })
-        : null
+    sendWelcomeEmail(user.email, user.firstName).catch(() => {})
 
-      const boutique = await prisma.boutique.create({
+    if (role === "MERCHANT" && shopName) {
+      const slug = slugify(shopName) + "-" + Date.now().toString(36)
+
+      const shop = await prisma.shop.create({
         data: {
-          proprietaireId: user.id,
-          nom: boutiqueNom,
-          slug: slugify(boutiqueNom) + "-" + Date.now().toString(36),
-          description: boutiqueDescription || null,
-          villeId: villeRecord?.id || null,
-          quartier: quartier || null,
+          ownerId: user.id,
+          name: shopName,
+          slug,
+          description: shopDescription || null,
+          address: shopAddress || null,
+          arrondissementId: arrondissementId || null,
+          district: district || null,
+          phone: shopPhone || phone || null,
+          whatsapp: shopWhatsapp || phone || null,
+          categoryId: shopCategoryId || null,
+          verificationStatus: "PENDING",
+          status: "PENDING",
         },
       })
 
-      await prisma.abonnement.create({
-        data: {
-          boutiqueId: boutique.id,
-          type: "GRATUIT",
-          dateDebut: new Date(),
-        },
+      // Create free subscription
+      const freePlan = await prisma.subscriptionPlan.findFirst({
+        where: { type: "FREE", status: true },
       })
+
+      if (freePlan) {
+        await prisma.shopSubscription.create({
+          data: {
+            shopId: shop.id,
+            subscriptionPlanId: freePlan.id,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: "ACTIVE",
+          },
+        })
+      }
     }
 
-    await prisma.journalActivite.create({
+    await prisma.auditLog.create({
       data: {
         userId: user.id,
-        action: "INSCRIPTION",
-        details: `Inscription en tant que ${role}`,
+        action: "REGISTRATION",
+        entityType: "User",
+        entityId: user.id,
+        newValues: { role },
       },
     })
 
